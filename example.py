@@ -36,6 +36,30 @@ class Program:
         collection = self.db[collection_name]
         print(collection.count_documents(filter={}))
 
+    def task_5(self):
+        collection = self.db['activity']
+        groups = collection.aggregate([
+            {
+                '$match':
+                    {
+                        'transportation_mode':
+                            {
+                                '$ne': None
+                            }
+                    }
+            },
+            {
+                '$group':
+                    {
+                        '_id': "$transportation_mode",
+                        'count': {'$sum': 1}
+                    }
+            }
+        ])
+        for group in groups:
+            print(group)
+
+
 def build_db():
     program = None
     try:
@@ -66,7 +90,19 @@ def count_all():
         program.count_documents(collection_name="activity")
         program.count_documents(collection_name="trackpoint")
     except Exception as e:
-        print("ERROR: Failed to build database:", e)
+        print("ERROR: Failed to count documents:", e)
+    finally:
+        if program:
+            program.connection.close_connection()
+
+
+def test():
+    program = None
+    try:
+        program = Program()
+        program.task_5()
+    except Exception as e:
+        print("ERROR: Failed test:", e)
     finally:
         if program:
             program.connection.close_connection()
@@ -74,7 +110,8 @@ def count_all():
 
 def main():
     # build_db()
-    count_all()
+    # count_all()
+    test()
 
 
 if __name__ == '__main__':
