@@ -72,7 +72,7 @@ class MyDataReader:
                                             label["end_date_time"] == end_date_time:
                                         transportation_mode = label["transportation_mode"]
                                 activity_dict = {
-                                    "id": int(filename.split(".")[0]),
+                                    "activity_id": int(filename.split(".")[0]),
                                     "user_id": subdirname,
                                     "transportation_mode": transportation_mode,
                                     "start_date_time": start_date_time,
@@ -81,7 +81,7 @@ class MyDataReader:
                                 activities.append(activity_dict)
 
                     user_dict = {
-                        "id": subdirname,
+                        "_id": subdirname,
                         "has_labels": has_labels,
                     }
                     users.append(user_dict)
