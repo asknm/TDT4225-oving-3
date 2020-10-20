@@ -36,7 +36,63 @@ class Program:
         collection = self.db[collection_name]
         print(collection.count_documents(filter={}))
 
-    def task_5(self):
+    # TASK 2
+    # 2.1
+    def count_all(self, collection_name):
+        collection = self.db[collection_name]
+        count = collection.find({}).count()
+        print(count)
+
+    # 2.2
+    def average_activities(self):
+        collection_activity = self.db['activity']
+        collection_user = self.db['user']
+        count_activity = collection_activity.find({}).count()
+        count_user = collection_user.find({}).count()
+        count = count_activity / count_user
+        print("Average amount of activities per user:")
+        print(count)
+
+    # 2.3
+    def top_twenty_users(self):
+        collection_activity = self.db['activity']
+        collection = collection_activity.aggregate([
+            {
+                '$group':
+                    {
+                        '_id': '$user_id',
+                        'count': {'$sum': 1}
+                    }
+            },
+            {
+                '$sort': {"count": -1}
+            }
+        ])
+        result = collection.find({}).limit(20)
+        print(result)
+
+    # 2.4
+    def taxi_users(self):
+        collection_activity = self.db['activity']
+        collection = collection_activity.aggregate([
+            {
+                '$match':
+                    {
+                        'transportation_mode': 'taxi'
+                    }
+            },
+            {
+                '$group':
+                    {
+                        '_id': '$user_id'
+                    }
+            }
+        ])
+        for user in collection:
+            print(user)
+
+    # 2.5
+    def all_transportation_modes(self):
         collection = self.db['activity']
         groups = collection.aggregate([
             {
@@ -58,6 +114,9 @@ class Program:
         ])
         for group in groups:
             print(group)
+
+    # 2.7
+    def user_112_distance_walked_2008(self):
 
 
 def build_db():
