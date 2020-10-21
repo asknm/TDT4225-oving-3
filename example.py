@@ -36,6 +36,42 @@ class Program:
         collection = self.db[collection_name]
         print(collection.count_documents(filter={}))
 
+    def update_date_times(self):
+        collection = self.db['activity']
+        collection.update_many({}, [{
+            '$set':
+                {
+                    'start_date_time':
+                        {
+                            '$dateFromString':
+                                {
+                                    'dateString': '$start_date_time'
+                                }
+                        },
+                    'end_date_time':
+                        {
+                            '$dateFromString':
+                                {
+                                    'dateString': '$end_date_time'
+                                }
+                        }
+                }
+        }])
+
+        collection = self.db['trackpoint']
+        collection.update_many({}, [{
+            '$set':
+                {
+                    'date_time':
+                        {
+                            '$dateFromString':
+                                {
+                                    'dateString': '$date_time'
+                                }
+                        }
+                }
+        }])
+
     # TASK 2
     # 2.1
     def count_all(self, collection_name):
@@ -113,10 +149,85 @@ class Program:
             }
         ])
         for group in groups:
-            print(group)
+            pprint(group)
+
+    # 2.6a
+    def most_active_year_by_activity_count(self):
+        collection = self.db['activity']
+        groups = collection.aggregate([
+            {
+                '$group':
+                    {
+                        '_id': {
+                            '$year': '$start_date_time'
+                        },
+                        'count': {'$sum': 1}
+                    }
+            },
+            {
+                '$sort':
+                    {
+                        'count': -1
+                    }
+            },
+            {
+                '$limit': 1
+            },
+            {
+                '$project':
+                    {
+                        '_id': '$_id'
+                    }
+            }
+        ])
+        for group in groups:
+            pprint(group)
+
+    # 2.6b
+    def most_active_year_by_hours(self):
+        collection = self.db['activity']
+        groups = collection.aggregate([
+            {
+                '$addFields':
+                    {
+                        'hours':
+                            {
+                                '$divide':
+                                    [
+                                        {
+                                            '$subtract': ['$end_date_time', '$start_date_time']
+                                        },
+                                        3600000
+                                    ]
+                            }
+                    }
+            },
+            {
+                '$group':
+                    {
+                        '_id': {
+                            '$year': '$start_date_time'
+                        },
+                        'sum_hours':
+                            {
+                                '$sum': '$hours'
+                            }
+                    }
+            },
+
+            {
+                '$sort':
+                    {
+                        'sum_hours': -1
+                    }
+            },
+        ])
+        for group in groups:
+            pprint(group)
 
     # 2.7
     def user_112_distance_walked_2008(self):
+        pass
 
 
 def build_db():
@@ -159,7 +270,12 @@ def test():
     program = None
     try:
         program = Program()
-        program.task_5()
+        # program.fetch_documents('trackpoint')
+        # program.update_date_times()
+
+        # program.all_transportation_modes()
+        # program.most_active_year_by_activity_count()
+        program.most_active_year_by_hours()
     except Exception as e:
         print("ERROR: Failed test:", e)
     finally:
