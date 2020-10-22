@@ -229,6 +229,109 @@ class Program:
     def user_112_distance_walked_2008(self):
         pass
 
+    # 2.8
+    def top_20_altitude(self):
+        collection = self.db['trackpoint']
+        groups = collection.aggregate([
+            {
+                '$group':
+                    {
+                        '_id': '$activity_id',
+                        'altitudes':
+                            {
+                                '$push': '$altitude'
+                            }
+                    }
+            },
+            {
+                '$project':
+                    {
+                        '_id': '$_id',
+                        'temp':
+                            {
+                                '$reduce':
+                                    {
+                                        'input': '$altitudes',
+                                        'initialValue':
+                                            {
+                                                'prev': -777,
+                                                'altitude_gain': 0
+                                            },
+                                        'in':
+                                            {
+                                                'prev': '$$this',
+                                                'altitude_gain':
+                                                    {
+                                                        '$add': ['$$value.altitude_gain', {
+                                                            '$cond': [
+                                                                {
+                                                                    '$and':
+                                                                        [
+                                                                            {
+                                                                                '$gt': ['$$this', '$$value.prev']
+                                                                            },
+                                                                            {
+                                                                                '$ne': ['$$this', -777]
+                                                                            },
+                                                                            {
+                                                                                '$ne': ['$$value.prev', -777]
+                                                                            }
+                                                                        ]
+                                                                },
+                                                                {
+                                                                    '$subtract': ['$$this', '$$value.prev']
+                                                                },
+                                                                0
+                                                            ]
+                                                        }]
+                                                    }
+                                            }
+                                    }
+                            }
+                    }
+            },
+            {
+                '$project':
+                    {
+                        '_id': '$_id',
+                        'gain': '$temp.altitude_gain'
+                    }
+            },
+            {
+                '$lookup':
+                    {
+                        'from': 'activity',
+                        'localField': '_id',
+                        'foreignField': 'activity_id',
+                        'as': 'activity'
+                    }
+            },
+            {
+                '$unwind': '$activity'
+            },
+            {
+                '$group':
+                    {
+                        '_id': '$activity.user_id',
+                        'total_gain':
+                            {
+                                '$sum': '$gain'
+                            }
+                    }
+            },
+            {
+                '$sort':
+                    {
+                        'total_gain': -1
+                    }
+            },
+            {
+                '$limit': 20
+            }
+        ], allowDiskUse=True)
+        for group in groups:
+            pprint(group)
+
     # 2.10
     def forbidden_city(self):
         collection = self.db['trackpoint']
@@ -325,7 +428,7 @@ def test():
 
         # program.all_transportation_modes()
         # program.most_active_year_by_activity_count()
-        program.forbidden_city()
+        program.most_active_year_by_hours()
     except Exception as e:
         print("ERROR: Failed test:", e)
     finally:
