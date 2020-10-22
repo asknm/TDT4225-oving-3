@@ -229,6 +229,56 @@ class Program:
     def user_112_distance_walked_2008(self):
         pass
 
+    # 2.10
+    def forbidden_city(self):
+        collection = self.db['trackpoint']
+        groups = collection.aggregate([
+            {
+                '$project': {
+                    'activity_id': '$activity_id',
+                    'rounded_lat':
+                        {
+                            '$round': ['$lat', 2]},
+                    'rounded_lon':
+                        {
+                            '$round': ['$lon', 2]}
+                }
+            },
+            {
+                '$match':
+                    {
+                        'rounded_lat': 39.92,
+                        'rounded_lon': 116.40
+                    }
+            },
+            {
+                '$group':
+                    {
+                        '_id': '$activity_id'
+                    }
+            },
+            {
+                '$lookup':
+                    {
+                        'from': 'activity',
+                        'localField': '_id',
+                        'foreignField': 'activity_id',
+                        'as': 'activity'
+                    }
+            },
+            {
+                '$unwind': '$activity'
+            },
+            {
+                '$group':
+                    {
+                        '_id': '$activity.user_id'
+                    }
+            }
+        ])
+        for group in groups:
+            pprint(group)
+
 
 def build_db():
     program = None
@@ -275,7 +325,7 @@ def test():
 
         # program.all_transportation_modes()
         # program.most_active_year_by_activity_count()
-        program.most_active_year_by_hours()
+        program.forbidden_city()
     except Exception as e:
         print("ERROR: Failed test:", e)
     finally:
