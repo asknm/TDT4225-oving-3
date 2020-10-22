@@ -235,7 +235,7 @@ class Program:
         res = self.cursor.fetchall()
         print("Users that have activities in The Forbidden City:")
         print(res)
-        
+
     # 11
     def transportation_mode_users(self):
         query = """

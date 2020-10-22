@@ -382,6 +382,53 @@ class Program:
         for group in groups:
             pprint(group)
 
+    # 2.11
+    def most_transportation_modes(self):
+        collection = self.db['activity']
+        groups = collection.aggregate([
+            {
+                '$match':
+                    {
+                        'transportation_mode':
+                            {
+                                '$ne': None
+                            }
+                    }
+            },
+            {
+                '$group':
+                    {
+                        '_id': {
+                            'user_id': '$user_id',
+                            'transportation_mode': '$transportation_mode'
+                        },
+                        'count': {'$sum': 1}
+                    }
+            },
+            {
+                '$group':
+                    {
+                        '_id': '$_id.user_id',
+                        'transportation_mode': {'$first': '$_id.transportation_mode'},
+                        'max_c': {'$max': '$count'}
+                    }
+            },
+            {
+                '$project':
+                    {
+                        '_id': '$_id',
+                        'most_used_transportation_mode': '$transportation_mode',
+                    }
+            },
+            {
+                '$sort':
+                    {
+                        '_id': 1
+                    }
+            }])
+        for group in groups:
+            pprint(group)
+
 
 def build_db():
     program = None
@@ -426,9 +473,9 @@ def test():
         # program.fetch_documents('trackpoint')
         # program.update_date_times()
 
-        # program.all_transportation_modes()
+        program.most_transportation_modes()
         # program.most_active_year_by_activity_count()
-        program.most_active_year_by_hours()
+        # program.most_active_year_by_hours()
     except Exception as e:
         print("ERROR: Failed test:", e)
     finally:
