@@ -379,6 +379,98 @@ class Program:
             pprint(group)
 
     # 2.9
+    def find_invalid_activities(self):
+        collection = self.db['activity']
+        groups = collection.aggregate([
+            {
+                '$lookup':
+                    {
+                        'from': 'trackpoint',
+                        'localField': 'activity_id',
+                        'foreignField': 'activity_id',
+                        'as': 'tp'
+                    }
+            },
+            {
+                '$project':
+                    {
+                        'user_id': '$user_id',
+                        'temp':
+                            {
+                                '$reduce':
+                                    {
+                                        'input': '$tp',
+                                        'initialValue':
+                                            {
+                                                'prev': -1,
+                                                'valid': True
+                                            },
+                                        'in':
+                                            {
+                                                'prev': '$$this.date_time',
+                                                'valid':
+                                                    {
+                                                        '$cond':
+                                                            {
+                                                                'if': '$$value.valid',
+                                                                'then':
+                                                                    {
+                                                                        '$cond':
+                                                                            {
+                                                                                'if':
+                                                                                    {
+                                                                                        '$and':
+                                                                                            [
+                                                                                                {'$ne': ['$$value.prev',
+                                                                                                         -1]},
+                                                                                                {
+                                                                                                    '$gt':
+                                                                                                        [
+                                                                                                            {
+                                                                                                                '$divide':
+                                                                                                                    [
+                                                                                                                        {
+                                                                                                                            '$subtract': [
+                                                                                                                                '$$this.date_time',
+                                                                                                                                '$$value.prev']
+                                                                                                                        },
+                                                                                                                        60000
+                                                                                                                    ]
+                                                                                                            },
+                                                                                                            5
+                                                                                                        ],
+                                                                                                }
+                                                                                            ]
+                                                                                    },
+                                                                                'then': False,
+                                                                                'else': True
+                                                                            }
+                                                                    },
+                                                                'else': False
+                                                            }
+                                                    }
+                                            }
+                                    }
+                            }
+                    }
+            },
+            {
+                '$match':
+                    {
+                        'temp.valid': False
+                    }
+            },
+            {
+                '$group':
+                    {
+                        '_id': '$user_id',
+                        'count': {'$sum': 1}
+                    }
+            }
+
+        ])
+        for group in groups:
+            pprint(group)
 
     # 2.10
     def forbidden_city(self):
@@ -518,7 +610,7 @@ def test():
     program = None
     try:
         program = Program()
-        # program.fetch_documents('trackpoint')
+        # program.fetch_documents('user')
         # program.update_date_times()
 
         # 2.1
@@ -538,11 +630,11 @@ def test():
         # 2.6b
         # program.most_active_year_by_hours()
         # 2.7
-        program.user_112_distance_walked_2008()
+        # program.user_112_distance_walked_2008()
         # 2.8
         # program.top_20_altitude()
         # 2.9
-
+        # program.find_invalid_activities()
         # 2.10
         # program.forbidden_city()
         # 2.11
