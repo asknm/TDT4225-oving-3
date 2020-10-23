@@ -473,9 +473,29 @@ def test():
         # program.fetch_documents('trackpoint')
         # program.update_date_times()
 
-        program.most_transportation_modes()
+        # 2.1
+        # program.count_all('user')
+        # program.count_all('activity')
+        # program.count_all('trackpoint')
+        # 2.2
+        # program.average_activities()
+        # 2.3
+        # program.top_twenty_users()
+        # 2.4
+        # program.taxi_users()
+        # 2.5
+        # program.all_transportation_modes()
+        # 2.6
         # program.most_active_year_by_activity_count()
+        # 2.7
         # program.most_active_year_by_hours()
+        # 2.8
+        # program.top_20_altitude()
+        # 2.10
+        # program.forbidden_city()
+        # 2.11
+        # program.most_transportation_modes()
+
     except Exception as e:
         print("ERROR: Failed test:", e)
     finally:
