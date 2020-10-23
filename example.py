@@ -1,4 +1,8 @@
 from pprint import pprint
+
+import pymongo
+from haversine import haversine
+
 from DbConnector import DbConnector
 from MyDataReader import MyDataReader
 
@@ -227,7 +231,49 @@ class Program:
 
     # 2.7
     def user_112_distance_walked_2008(self):
-        pass
+        collection_activity = self.db['activity']
+        # collection_activity.create_index([('activity_id', pymongo.ASCENDING)])
+        collection_trackpoint = self.db['trackpoint']
+        # collection_trackpoint.create_index([('activity_id', pymongo.ASCENDING)])
+        groups = collection_activity.aggregate([
+            {
+                '$project':
+                    {
+                        'user_id': '$user_id',
+                        'transportation_mode': '$transportation_mode',
+                        'activity_id': '$activity_id',
+                        'year':
+                            {
+                                '$year': '$start_date_time'
+                            }
+                    }
+            },
+            {
+                '$match':
+                    {
+                        'user_id': '112',
+                        'transportation_mode': 'walk',
+                        'year': 2008
+                    }
+            },
+            {
+                '$lookup':
+                    {
+                        'from': 'trackpoint',
+                        'localField': 'activity_id',
+                        'foreignField': 'activity_id',
+                        'as': 'trackpoints'
+                    }
+            },
+        ])
+        distance = 0.0
+        for group in groups:
+            for i, trackpoint in enumerate(group['trackpoints']):
+                if i > 0:
+                    distance += haversine((trackpoint['lat'], trackpoint['lon']),
+                                          (group['trackpoints'][i - 1]['lat'], group['trackpoints'][i - 1]['lon']))
+        print("Total distance:")
+        print(distance)
 
     # 2.8
     def top_20_altitude(self):
@@ -331,6 +377,8 @@ class Program:
         ], allowDiskUse=True)
         for group in groups:
             pprint(group)
+
+    # 2.9
 
     # 2.10
     def forbidden_city(self):
@@ -485,12 +533,16 @@ def test():
         # program.taxi_users()
         # 2.5
         # program.all_transportation_modes()
-        # 2.6
+        # 2.6a
         # program.most_active_year_by_activity_count()
-        # 2.7
+        # 2.6b
         # program.most_active_year_by_hours()
+        # 2.7
+        program.user_112_distance_walked_2008()
         # 2.8
         # program.top_20_altitude()
+        # 2.9
+
         # 2.10
         # program.forbidden_city()
         # 2.11
